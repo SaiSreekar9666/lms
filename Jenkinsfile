@@ -6,7 +6,7 @@ pipeline {
         DOCKER_REGISTRY = "https://hub.docker.com/repositories/gsaisreekar9666"
         DATABASE_URL = "postgresql://postgres:lms@12345@172.18.0.2:5432/postgres"
         SONARQUBE_URL = "http://54.162.76.244:9000/"
-        SONARQUBE_TOKEN = credentials('sqp_9ad4086bd53578feacdbe77a3d19d8d3a0bb9068')
+        SONARQUBE_TOKEN = "sqp_9ad4086bd53578feacdbe77a3d19d8d3a0bb9068"
         NEXUS_URL = "http://54.162.76.244:8081"
         NEXUS_REPO = "lms-nexus"
     }
