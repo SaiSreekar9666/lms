@@ -4,10 +4,10 @@ pipeline {
         DOCKER_IMAGE_BACKEND = "gsaisreekar9666/lms-be:${env.BUILD_NUMBER}"
         DOCKER_IMAGE_FRONTEND = "gsaisreekar9666/lms-fe:${env.BUILD_NUMBER}"
         DOCKER_REGISTRY = "https://hub.docker.com/repositories/gsaisreekar9666"
-        DATABASE_URL = "postgresql://postgres:lms@12345@172.18.0.2:5432/postgres"
-        SONARQUBE_URL = "http://54.162.76.244:9000"
-        SONARQUBE_TOKEN = Credentials('sonarqube-token')
-        NEXUS_URL = "http://54.162.76.244:8081"
+        DATABASE_URL = "postgresql://postgres:lms@12345@lms-db:5432/postgres"
+        SONARQUBE_URL = "http://18.208.120.137:9000/"
+        SONARQUBE_TOKEN = credentials('sonarqube-token')  // Correct ID used here
+        NEXUS_URL = "http://18.208.120.1374:8081"
         NEXUS_REPO = "lms-nexus"
     }
     stages {
@@ -24,37 +24,41 @@ pipeline {
         stage('SonarQube Analysis - Backend') {
             steps {
                 echo 'Running SonarQube analysis on Backend'
-                sh """
-                cd lms/api
-                docker run --rm \
-                    -e SONAR_HOST_URL=${SONARQUBE_URL} \
-                    -e SONAR_TOKEN=${SONARQUBE_TOKEN} \
-                    -v "$PWD:/usr/src" \
-                    sonarsource/sonar-scanner-cli \
-                    -Dsonar.projectKey=lms-api
-                """
+                dir('lms/api') {
+                    sh """
+                    docker run --rm \
+                        -e SONAR_HOST_URL=${SONARQUBE_URL} \
+                        -e SONAR_TOKEN=${SONARQUBE_TOKEN} \
+                        -v "$PWD:/usr/src" \
+                        sonarsource/sonar-scanner-cli \
+                        -Dsonar.projectKey=lms-api
+                    """
+                }
                 echo 'SonarQube analysis completed for Backend'
             }
         }
         stage('SonarQube Analysis - Frontend') {
             steps {
                 echo 'Running SonarQube analysis on Frontend'
-                sh """
-                cd lms/webapp
-                docker run --rm \
-                    -e SONAR_HOST_URL=${SONARQUBE_URL} \
-                    -e SONAR_TOKEN=${SONARQUBE_TOKEN} \
-                    -v "$PWD:/usr/src" \
-                    sonarsource/sonar-scanner-cli \
-                    -Dsonar.projectKey=lms-webapp
-                """
+                dir('lms/webapp') {
+                    sh """
+                    docker run --rm \
+                        -e SONAR_HOST_URL=${SONARQUBE_URL} \
+                        -e SONAR_TOKEN=${SONARQUBE_TOKEN} \
+                        -v "$PWD:/usr/src" \
+                        sonarsource/sonar-scanner-cli \
+                        -Dsonar.projectKey=lms-webapp
+                    """
+                }
                 echo 'SonarQube analysis completed for Frontend'
             }
         }
         stage('Build Docker Images - Backend') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE_BACKEND}", "-f lms/api/Dockerfile ./lms/api")
+                    dir('lms/api') {
+                        docker.build("${DOCKER_IMAGE_BACKEND}", "-f Dockerfile .")
+                    }
                 }
                 echo 'Docker image built for Backend'
             }
@@ -62,7 +66,9 @@ pipeline {
         stage('Build Docker Images - Frontend') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE_FRONTEND}", "-f lms/webapp/Dockerfile ./lms/webapp")
+                    dir('lms/webapp') {
+                        docker.build("${DOCKER_IMAGE_FRONTEND}", "-f Dockerfile .")
+                    }
                 }
                 echo 'Docker image built for Frontend'
             }
